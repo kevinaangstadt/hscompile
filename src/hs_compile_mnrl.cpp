@@ -42,286 +42,286 @@ using namespace MNRL;
 static
 void parseSymbolSet(CharReach &column, std::string symbol_set) {
 
-        if(symbol_set.compare("*") == 0){
-            column.setall();
-            return;
-        }
+	if(symbol_set.compare("*") == 0){
+		column.setall();
+		return;
+	}
 
-        // KAA found that apcompile parses symbol-set="." to mean "^\x0a"
-        // hard-coding this here
-        if(symbol_set.compare(".") == 0) {
-            column.set('\n');
-            column.flip();
-            return;
-        }
+	// KAA found that apcompile parses symbol-set="." to mean "^\x0a"
+	// hard-coding this here
+	if(symbol_set.compare(".") == 0) {
+		column.set('\n');
+		column.flip();
+		return;
+	}
 
-        bool in_charset = false;
-        bool escaped = false;
-        bool inverting = false;
-        bool range_set = false;
-        int bracket_sem = 0;
-        int brace_sem = 0;
-        const unsigned int value = 1;
-        unsigned char last_char = 0;
-        unsigned char range_start = 0;
+	bool in_charset = false;
+	bool escaped = false;
+	bool inverting = false;
+	bool range_set = false;
+	int bracket_sem = 0;
+	int brace_sem = 0;
+	const unsigned int value = 1;
+	unsigned char last_char = 0;
+	unsigned char range_start = 0;
 
-        // handle symbol sets that start and end with curly braces {###}
-        if((symbol_set[0] == '{') &&
-           (symbol_set[symbol_set.size() - 1] == '}')){
+	// handle symbol sets that start and end with curly braces {###}
+	if((symbol_set[0] == '{') &&
+			(symbol_set[symbol_set.size() - 1] == '}')){
 
-            std::cout << "CURLY BRACES NOT IMPLEMENTED" << std::endl;
-            exit(1);
-        }
+		std::cout << "CURLY BRACES NOT IMPLEMENTED" << std::endl;
+		exit(1);
+	}
 
-        int index = 0;
-        while(index < symbol_set.size()) {
+	int index = 0;
+	while(index < symbol_set.size()) {
 
-            unsigned char c = symbol_set[index];
+		unsigned char c = symbol_set[index];
 
-            //std::cout << "PROCESSING CHAR: " << c << std::endl;
+		//std::cout << "PROCESSING CHAR: " << c << std::endl;
 
-            switch(c){
+		switch(c){
 
-                    // Brackets
-                case '[' :
-                    if(escaped){
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                        escaped = false;
-                    }else{
-                        bracket_sem++;
-                    }
-                    break;
-                case ']' :
-                    if(escaped){
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
+		// Brackets
+		case '[' :
+			if(escaped){
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+				escaped = false;
+			}else{
+				bracket_sem++;
+			}
+			break;
+		case ']' :
+			if(escaped){
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
 
-                        last_char = c;
-                    }else{
-                        bracket_sem--;
-                    }
+				last_char = c;
+			}else{
+				bracket_sem--;
+			}
 
-                    break;
+			break;
 
-                    // Braces
-                case '{' :
+			// Braces
+		case '{' :
 
-                    //if(escaped){
-                    column.set(c);
-                    if(range_set){
-                        column.setRange(range_start,c);
-                        range_set = false;
-                    }
+			//if(escaped){
+			column.set(c);
+			if(range_set){
+				column.setRange(range_start,c);
+				range_set = false;
+			}
 
-                    last_char = c;
-                    //escaped = false;
-                    //}else{
-                    //brace_sem++;
-                    //}
-                    break;
-                case '}' :
-                    //if(escaped){
-                    column.set(c);
-                    if(range_set){
-                        column.setRange(range_start,c);
-                        range_set = false;
-                    }
-                    last_char = c;
-                    //escaped = false;
-                    //}else{
-                    //brace_sem--;
-                    //}
-                    break;
+			last_char = c;
+			//escaped = false;
+			//}else{
+				//brace_sem++;
+				//}
+			break;
+		case '}' :
+			//if(escaped){
+			column.set(c);
+			if(range_set){
+				column.setRange(range_start,c);
+				range_set = false;
+			}
+			last_char = c;
+			//escaped = false;
+			//}else{
+				//brace_sem--;
+				//}
+			break;
 
-                    //escape
-                case '\\' :
-                    if(escaped){
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
+			//escape
+		case '\\' :
+			if(escaped){
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
 
-                        last_char = c;
-                        escaped = false;
-                    }else{
-                        escaped = true;
-                    }
-                    break;
+				last_char = c;
+				escaped = false;
+			}else{
+				escaped = true;
+			}
+			break;
 
-                    // escaped chars
-                case 'n' :
-                    if(escaped){
-                        column.set('\n');
-                        if(range_set){
-                            column.setRange(range_start,'\n');
-                            range_set = false;
-                        }
-                        last_char = '\n';
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
-                case 'r' :
-                    if(escaped){
-                        column.set('\r');
-                        if(range_set){
-                            column.setRange(range_start,'\r');
-                            range_set = false;
-                        }
-                        last_char = '\r';
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
-                case 't' :
-                    if(escaped){
-                        column.set('\t');
-                        if(range_set){
-                            column.setRange(range_start,'\t');
-                            range_set = false;
-                        }
-                        last_char = '\t';
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
-                case 'a' :
-                    if(escaped){
-                        column.set('\a');
-                        if(range_set){
-                            column.setRange(range_start,'\a');
-                            range_set = false;
-                        }
-                        last_char = '\a';
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
-                case 'b' :
-                    if(escaped){
-                        column.set('\b');
-                        if(range_set){
-                            column.setRange(range_start,'\b');
-                            range_set = false;
-                        }
-                        last_char = '\b';
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            //std::cout << "RANGE SET" << std::endl;
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
-                case 'f' :
-                    if(escaped){
-                        column.set('\f');
-                        if(range_set){
-                            column.setRange(range_start,'\f');
-                            range_set = false;
-                        }
-                        last_char = '\f';
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
-                case 'v' :
-                    if(escaped){
-                        column.set('\v');
-                        if(range_set){
-                            column.setRange(range_start,'\v');
-                            range_set = false;
-                        }
-                        last_char = '\v';
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
-                case '\'' :
-                    if(escaped){
-                        column.set('\'');
-                        if(range_set){
-                            column.setRange(range_start,'\'');
-                            range_set = false;
-                        }
-                        last_char = '\'';
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
-                case '\"' :
-                    if(escaped){
-                        column.set('\"');
-                        if(range_set){
-                            column.setRange(range_start,'\"');
-                            range_set = false;
-                        }
-                        last_char = '\"';
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
-                    /*
+			// escaped chars
+		case 'n' :
+			if(escaped){
+				column.set('\n');
+				if(range_set){
+					column.setRange(range_start,'\n');
+					range_set = false;
+				}
+				last_char = '\n';
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
+		case 'r' :
+			if(escaped){
+				column.set('\r');
+				if(range_set){
+					column.setRange(range_start,'\r');
+					range_set = false;
+				}
+				last_char = '\r';
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
+		case 't' :
+			if(escaped){
+				column.set('\t');
+				if(range_set){
+					column.setRange(range_start,'\t');
+					range_set = false;
+				}
+				last_char = '\t';
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
+		case 'a' :
+			if(escaped){
+				column.set('\a');
+				if(range_set){
+					column.setRange(range_start,'\a');
+					range_set = false;
+				}
+				last_char = '\a';
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
+		case 'b' :
+			if(escaped){
+				column.set('\b');
+				if(range_set){
+					column.setRange(range_start,'\b');
+					range_set = false;
+				}
+				last_char = '\b';
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					//std::cout << "RANGE SET" << std::endl;
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
+		case 'f' :
+			if(escaped){
+				column.set('\f');
+				if(range_set){
+					column.setRange(range_start,'\f');
+					range_set = false;
+				}
+				last_char = '\f';
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
+		case 'v' :
+			if(escaped){
+				column.set('\v');
+				if(range_set){
+					column.setRange(range_start,'\v');
+					range_set = false;
+				}
+				last_char = '\v';
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
+		case '\'' :
+			if(escaped){
+				column.set('\'');
+				if(range_set){
+					column.setRange(range_start,'\'');
+					range_set = false;
+				}
+				last_char = '\'';
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
+		case '\"' :
+			if(escaped){
+				column.set('\"');
+				if(range_set){
+					column.setRange(range_start,'\"');
+					range_set = false;
+				}
+				last_char = '\"';
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
+			/*
                      case '?' :
                      if(escaped){
                      column.set('?',value);
@@ -332,152 +332,152 @@ void parseSymbolSet(CharReach &column, std::string symbol_set) {
                      last_char = c;
                      }
                      break;
-                     */
-                    // Range
-                case '-' :
-                    if(escaped){
-                        column.set('-');
-                        if(range_set){
-                            column.setRange(range_start,'-');
-                            range_set = false;
-                        }
-                        last_char = '-';
-                    }else{
-                        range_set = true;
-                        range_start = last_char;
-                    }
-                    break;
+			 */
+			// Range
+		case '-' :
+			if(escaped){
+				column.set('-');
+				if(range_set){
+					column.setRange(range_start,'-');
+					range_set = false;
+				}
+				last_char = '-';
+			}else{
+				range_set = true;
+				range_start = last_char;
+			}
+			break;
 
-                    // Special Classes
-                case 's' :
-                    if(escaped){
-                        column.set('\n');
-                        column.set('\t');
-                        column.set('\r');
-                        column.set('\x0B'); //vertical tab
-                        column.set('\x0C');
-                        column.set('\x20');
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
+			// Special Classes
+		case 's' :
+			if(escaped){
+				column.set('\n');
+				column.set('\t');
+				column.set('\r');
+				column.set('\x0B'); //vertical tab
+				column.set('\x0C');
+				column.set('\x20');
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
 
-                case 'd' :
-                    if(escaped){
-                        column.setRange(48,57);
-                        //setRange(column,48,57, value);
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
+		case 'd' :
+			if(escaped){
+				column.setRange(48,57);
+				//setRange(column,48,57, value);
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
 
-                case 'w' :
-                    if(escaped){
-                        column.set('_'); // '_'
-                        column.setRange(48,57);
-                        //setRange(column,48,57, value); // d
-                        column.setRange(65,90);
-                        //setRange(column,65,90, value); // A-Z
-                        column.setRange(97,122);
-                        // setRange(column,97,122, value); // a-z
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
+		case 'w' :
+			if(escaped){
+				column.set('_'); // '_'
+				column.setRange(48,57);
+				//setRange(column,48,57, value); // d
+				column.setRange(65,90);
+				//setRange(column,65,90, value); // A-Z
+				column.setRange(97,122);
+				// setRange(column,97,122, value); // a-z
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
 
-                    // Inversion
-                case '^' :
-                    if(escaped){
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                        escaped = false;
-                    }else{
-                        inverting = true;
-                    }
-                    break;
+			// Inversion
+		case '^' :
+			if(escaped){
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+				escaped = false;
+			}else{
+				inverting = true;
+			}
+			break;
 
-                    // HEX
-                case 'x' :
-                    if(escaped){
-                        //process hex char
-                        ++index;
-                        char hex[3];
-                        hex[0] = (char)symbol_set.c_str()[index];
-                        hex[1] = (char)symbol_set.c_str()[index+1];
-                        hex[2] = '\0';
-                        unsigned char number = (unsigned char)std::strtoul(hex, NULL, 16);
+			// HEX
+		case 'x' :
+			if(escaped){
+				//process hex char
+				++index;
+				char hex[3];
+				hex[0] = (char)symbol_set.c_str()[index];
+				hex[1] = (char)symbol_set.c_str()[index+1];
+				hex[2] = '\0';
+				unsigned char number = (unsigned char)std::strtoul(hex, NULL, 16);
 
-                        //
-                        ++index;
-                        column.set(number);
-                        if(range_set){
-                            column.setRange(range_start,number);
-                            range_set = false;
-                        }
-                        last_char = number;
-                        escaped = false;
-                    }else{
-                        column.set(c);
-                        if(range_set){
-                            column.setRange(range_start,c);
-                            range_set = false;
-                        }
-                        last_char = c;
-                    }
-                    break;
-
-
-                    // Other characters
-                default:
-                    if(escaped){
-                        // we escaped a char that is not valid so treat it normaly
-                        escaped = false;
-                    }
-                    column.set(c);
-                    if(range_set){
-                        column.setRange(range_start,c);
-                        range_set = false;
-                    }
-                    last_char = c;
-            };
-
-            index++;
-        } // char while loop
-
-        if(inverting)
-            column.flip();
-
-        if(bracket_sem != 0 ||
-           brace_sem != 0){
-            std::cout << "MALFORMED BRACKETS OR BRACES: " << symbol_set <<  std::endl;
-            std::cout << "brackets: " << bracket_sem << std::endl;
-            exit(1);
-        }
+				//
+				++index;
+				column.set(number);
+				if(range_set){
+					column.setRange(range_start,number);
+					range_set = false;
+				}
+				last_char = number;
+				escaped = false;
+			}else{
+				column.set(c);
+				if(range_set){
+					column.setRange(range_start,c);
+					range_set = false;
+				}
+				last_char = c;
+			}
+			break;
 
 
-        /*
+			// Other characters
+		default:
+			if(escaped){
+				// we escaped a char that is not valid so treat it normaly
+				escaped = false;
+			}
+			column.set(c);
+			if(range_set){
+				column.setRange(range_start,c);
+				range_set = false;
+			}
+			last_char = c;
+		};
+
+		index++;
+	} // char while loop
+
+	if(inverting)
+		column.flip();
+
+	if(bracket_sem != 0 ||
+			brace_sem != 0){
+		std::cout << "MALFORMED BRACKETS OR BRACES: " << symbol_set <<  std::endl;
+		std::cout << "brackets: " << bracket_sem << std::endl;
+		exit(1);
+	}
+
+
+	/*
          std::cout << "***" << std::endl;
          for(int i = 0; i < 256; i++){
          if(column.test(i))
@@ -486,146 +486,146 @@ void parseSymbolSet(CharReach &column, std::string symbol_set) {
          std::cout << i << " : 0" << std::endl;
          }
          std::cout << "***" << std::endl;
-         */
-    }
+	 */
+}
 
 //WADDEN
 hs_error_t
 hs_compile_mnrl_int(const char * graphFN,
-                     hs_database_t **db,
-                     hs_compile_error_t **comp_error,
-					 const Grey &g) {
-    // Check the args: note that it's OK for flags, ids or ext to be null.
-    if (!comp_error) {
-        if (db) {
-            *db = nullptr;
-        }
-        // nowhere to write the string, but we can still report an error code
-        return HS_COMPILER_ERROR;
-    }
+		hs_database_t **db,
+		hs_compile_error_t **comp_error,
+		const Grey &g) {
+	// Check the args: note that it's OK for flags, ids or ext to be null.
+	if (!comp_error) {
+		if (db) {
+			*db = nullptr;
+		}
+		// nowhere to write the string, but we can still report an error code
+		return HS_COMPILER_ERROR;
+	}
 
-    if (!db) {
-        *comp_error = generateCompileError("Invalid parameter: db is NULL", -1);
-        return HS_COMPILER_ERROR;
-    }
+	if (!db) {
+		*comp_error = generateCompileError("Invalid parameter: db is NULL", -1);
+		return HS_COMPILER_ERROR;
+	}
 
-    // Setup
-    // KAA Hardcoding
-    unsigned somPrecision = 0;
-    target_t target_info = get_current_target();
-    CompileContext cc(false, false, target_info, g);
-    NG ng(cc, 1, somPrecision);
+	// Setup
+	// KAA Hardcoding
+	unsigned somPrecision = 0;
+	target_t target_info = get_current_target();
+	CompileContext cc(false, false, target_info, g);
+	NG ng(cc, 1, somPrecision);
 
-    // Build graph
-    try {
+	// Build graph
+	try {
 
-        //
-        unordered_map<string, NFAVertex> vertices;
+		//
+		unordered_map<string, NFAVertex> vertices;
 
-        unsigned int exp_ind = 0;
-        bool highlander_in = false;
-        bool utf_8 = false;
-        bool prefilter_in = false;
-        som_type som_in = SOM_NONE;
-        ReportID gid = 1;
-        u64a min_offset_in = 0;
-        u64a max_offset_in = MAX_OFFSET;
-        u64a min_length_in = 0;
+		unsigned int exp_ind = 0;
+		bool highlander_in = false;
+		bool utf_8 = false;
+		bool prefilter_in = false;
+		som_type som_in = SOM_NONE;
+		ReportID gid = 1;
+		u64a min_offset_in = 0;
+		u64a max_offset_in = MAX_OFFSET;
+		u64a min_length_in = 0;
 
-        // NFA CONSTRUCTION CODE
-        // construct NGWrapper object
-        auto graph_ptr = make_unique<NGWrapper>(exp_ind, // unsigned int expression index
-                                                highlander_in, // bool highlander_in
-                                                utf_8, // bool utf8
-                                                prefilter_in, // bool prefilter_in
-                                                som_in, // som_type som_in
-                                                gid, // ReportID r
-                                                min_offset_in, // u64a min_offset_in
-                                                max_offset_in, // u64a max_offset_in
-                                                min_length_in); //min_length_in
+		// NFA CONSTRUCTION CODE
+		// construct NGWrapper object
+		auto graph_ptr = make_unique<NGWrapper>(exp_ind, // unsigned int expression index
+				highlander_in, // bool highlander_in
+				utf_8, // bool utf8
+				prefilter_in, // bool prefilter_in
+				som_in, // som_type som_in
+				gid, // ReportID r
+				min_offset_in, // u64a min_offset_in
+				max_offset_in, // u64a max_offset_in
+				min_length_in); //min_length_in
 
 
-        NGWrapper &graph = *graph_ptr;
+		NGWrapper &graph = *graph_ptr;
 
-        // For now just register a dummy report code for all reports
-        Report report(EXTERNAL_CALLBACK, 1000);
-        ReportID report_id = ng.rm.getInternalId(report); // register with report manager
+		// For now just register a dummy report code for all reports
+		Report report(EXTERNAL_CALLBACK, 1000);
+		ReportID report_id = ng.rm.getInternalId(report); // register with report manager
 
-        // MNRL read in file name
-        // wrap with try/catch later maybe?
-        shared_ptr<MNRLNetwork> mnrl_graph = loadMNRL(graphFN);
+		// MNRL read in file name
+		// wrap with try/catch later maybe?
+		shared_ptr<MNRLNetwork> mnrl_graph = loadMNRL(graphFN);
 
-        map<string, shared_ptr<MNRLNode>> mnrl_nodes = mnrl_graph->getNodes();
+		map<string, shared_ptr<MNRLNode>> mnrl_nodes = mnrl_graph->getNodes();
 
-        // add nodes
-        for(auto n : mnrl_nodes){
+		// add nodes
+		for(auto n : mnrl_nodes){
 
-            string node_id = n.first;
-            if(n.second->getNodeType() != MNRLDefs::NodeType::HSTATE) {
-                cout << "found node that wasn't hState: " << node_id << endl;
-                exit(1);
-            }
-            // can do a cast to a MNRLHState
-            shared_ptr<MNRLNode> node_tmp = n.second;
-            shared_ptr<MNRLHState> node = dynamic_pointer_cast<MNRLHState>(node_tmp);
+			string node_id = n.first;
+			if(n.second->getNodeType() != MNRLDefs::NodeType::HSTATE) {
+				cout << "found node that wasn't hState: " << node_id << endl;
+				exit(1);
+			}
+			// can do a cast to a MNRLHState
+			shared_ptr<MNRLNode> node_tmp = n.second;
+			shared_ptr<MNRLHState> node = dynamic_pointer_cast<MNRLHState>(node_tmp);
 
-            // generate vertex
-            NFAVertex tmp = add_vertex(graph);
-            vertices[node_id] = tmp;
+			// generate vertex
+			NFAVertex tmp = add_vertex(graph);
+			vertices[node_id] = tmp;
 
-            // add charset
-            graph[tmp].char_reach = CharReach();
-            graph[tmp].char_reach.clear();
+			// add charset
+			graph[tmp].char_reach = CharReach();
+			graph[tmp].char_reach.clear();
 
-            parseSymbolSet(graph[tmp].char_reach, node->getSymbolSet());
+			parseSymbolSet(graph[tmp].char_reach, node->getSymbolSet());
 
-            // handle starts
-            MNRLDefs::EnableType start_type = node->getEnable();
-            switch(start_type) {
-                case MNRLDefs::ENABLE_ALWAYS :
-                    add_edge(graph.startDs, tmp, graph);
-                    break;
-                case MNRLDefs::ENABLE_ON_START_AND_ACTIVATE_IN :
-                    add_edge(graph.start, tmp, graph);
-                    break;
-                default:
-                    // do nothing
-                    // there is "ENABLE ON LAST" which ANMLZoo never uses but MNRL/ANML supports
-                    break;
-            };
+			// handle starts
+			MNRLDefs::EnableType start_type = node->getEnable();
+			switch(start_type) {
+			case MNRLDefs::ENABLE_ALWAYS :
+				add_edge(graph.startDs, tmp, graph);
+				break;
+			case MNRLDefs::ENABLE_ON_START_AND_ACTIVATE_IN :
+				add_edge(graph.start, tmp, graph);
+				break;
+			default:
+				// do nothing
+				// there is "ENABLE ON LAST" which ANMLZoo never uses but MNRL/ANML supports
+				break;
+			};
 
-            // report
-            if(node->getReport()) {
-                add_edge(tmp, graph.accept, graph);
-                // add report id
-                // should get HState report id, for now, just use our dummy report id
-                graph[tmp].reports.insert(report_id);
-            }
+			// report
+			if(node->getReport()) {
+				add_edge(tmp, graph.accept, graph);
+				// add report id
+				// should get HState report id, for now, just use our dummy report id
+				graph[tmp].reports.insert(report_id);
+			}
 
-        }
+		}
 
-        // add edges
-        for(auto n : mnrl_nodes){
+		// add edges
+		for(auto n : mnrl_nodes){
 
-            string node_id = n.first;
-            shared_ptr<MNRLNode> node = n.second;
+			string node_id = n.first;
+			shared_ptr<MNRLNode> node = n.second;
 
-            // get hs_vertex
-            NFAVertex hs_vertex = vertices[node_id];
+			// get hs_vertex
+			NFAVertex hs_vertex = vertices[node_id];
 
-            for(auto to : *(node->getOutputConnections())){
-                //ask port pointer to get connections
-                shared_ptr<MNRLPort> out_port = to.second;
-                //for each connection in the port
-                for(auto sink : out_port->getConnections()) {
-                    shared_ptr<MNRLNode> sinkNode = sink.first;
-                    add_edge(vertices[node_id], vertices[sinkNode->getId()], graph);
-                }
-            }
+			for(auto to : *(node->getOutputConnections())){
+				//ask port pointer to get connections
+				shared_ptr<MNRLPort> out_port = to.second;
+				//for each connection in the port
+				for(auto sink : out_port->getConnections()) {
+					shared_ptr<MNRLNode> sinkNode = sink.first;
+					add_edge(vertices[node_id], vertices[sinkNode->getId()], graph);
+				}
+			}
 
-        }
+		}
 
-        /*
+		/*
 
         // Open file
         string line;
@@ -728,9 +728,9 @@ hs_compile_mnrl_int(const char * graphFN,
             cout << "Could not open graph file!" << endl;
             exit(1);
         }
-         */
+		 */
 
-        /*
+		/*
         NGWrapper &graph = *graph_ptr;
 
         // Register reports
@@ -764,57 +764,57 @@ hs_compile_mnrl_int(const char * graphFN,
         graph[c].reports.insert(id);
 
 
-        */
+		 */
 
 
-        // add graph
-        printf("Attempting to add graph...\n");
-        if (!ng.addGraph(graph)) {
-            DEBUG_PRINTF("NFA addGraph failed.\n");
-            throw CompileError("Error compiling expression.");
-        }
-        printf("Added graph.\n");
-        // END NFA CONSTRUCTION CODE
+		// add graph
+		printf("Attempting to add graph...\n");
+		if (!ng.addGraph(graph)) {
+			DEBUG_PRINTF("NFA addGraph failed.\n");
+			throw CompileError("Error compiling expression.");
+		}
+		printf("Added graph.\n");
+		// END NFA CONSTRUCTION CODE
 
-        // Build database using graph
-        unsigned length = 0;
-        struct hs_database *out = build(ng, &length);
-        assert(out);    // should have thrown exception on error
-        assert(length);
+		// Build database using graph
+		unsigned length = 0;
+		struct hs_database *out = build(ng, &length);
+		assert(out);    // should have thrown exception on error
+		assert(length);
 
-        *db = out;
-        *comp_error = nullptr;
+		*db = out;
+		*comp_error = nullptr;
 
-        return HS_SUCCESS;
-    }
-    catch (const CompileError &e) {
-        // Compiler error occurred
-        printf("COMPILER ERROR!\n");
-        *db = nullptr;
-        *comp_error = generateCompileError(e.reason,
-                                           e.hasIndex ? (int)e.index : -1);
-        return HS_COMPILER_ERROR;
-    }
-    catch (std::bad_alloc) {
-        printf("BAD ALLOC!\n");
-        *db = nullptr;
-        *comp_error = const_cast<hs_compile_error_t *>(&hs_enomem);
-        return HS_COMPILER_ERROR;
-    }
-    catch (...) {
-        printf("OTHER ERROR!\n");
-        assert(!"Internal error, unexpected exception");
-        *db = nullptr;
-        *comp_error = const_cast<hs_compile_error_t *>(&hs_einternal);
-        return HS_COMPILER_ERROR;
-    }
+		return HS_SUCCESS;
+	}
+	catch (const CompileError &e) {
+		// Compiler error occurred
+		printf("COMPILER ERROR!\n");
+		*db = nullptr;
+		*comp_error = generateCompileError(e.reason,
+				e.hasIndex ? (int)e.index : -1);
+		return HS_COMPILER_ERROR;
+	}
+	catch (std::bad_alloc) {
+		printf("BAD ALLOC!\n");
+		*db = nullptr;
+		*comp_error = const_cast<hs_compile_error_t *>(&hs_enomem);
+		return HS_COMPILER_ERROR;
+	}
+	catch (...) {
+		printf("OTHER ERROR!\n");
+		assert(!"Internal error, unexpected exception");
+		*db = nullptr;
+		*comp_error = const_cast<hs_compile_error_t *>(&hs_einternal);
+		return HS_COMPILER_ERROR;
+	}
 }
 
 hs_error_t hs_compile_mnrl(const char * graphFN, unsigned mode,
-                      const hs_platform_info_t *platform, hs_database_t **db,
-                      hs_compile_error_t **error) {
+		const hs_platform_info_t *platform, hs_database_t **db,
+		hs_compile_error_t **error) {
 
-    return hs_compile_mnrl_int(graphFN, mode,
-                                platform, db, error, Grey());
+	return hs_compile_mnrl_int(graphFN, mode,
+			platform, db, error, Grey());
 }
 

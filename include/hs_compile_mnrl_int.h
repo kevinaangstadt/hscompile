@@ -5,10 +5,13 @@
 #include "hs.h"
 
 #ifdef __cplusplus
+namespace ue2 {
 hs_error_t hs_compile_mnrl_int(const char * graphFN, unsigned mode,
-                                    const hs_platform_info_t *platform,
-                                    hs_database_t **db,
-                                    hs_compile_error_t **comp_error, const Grey &g);
+		const hs_platform_info_t *platform,
+		hs_database_t **db,
+		hs_compile_error_t **comp_error, const Grey &g);
+
+}
 #endif
 
 #endif
