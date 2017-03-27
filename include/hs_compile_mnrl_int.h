@@ -6,8 +6,7 @@
 
 #ifdef __cplusplus
 namespace ue2 {
-hs_error_t hs_compile_mnrl_int(const char * graphFN, unsigned mode,
-		const hs_platform_info_t *platform,
+hs_error_t hs_compile_mnrl_int(const char * graphFN,
 		hs_database_t **db,
 		hs_compile_error_t **comp_error, const Grey &g);
 
