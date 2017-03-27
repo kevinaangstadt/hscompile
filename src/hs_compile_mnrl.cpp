@@ -4,6 +4,7 @@
 #include "grey.h"
 #include "hs_compile_mnrl.h"
 #include "hs_internal.h"
+#include "hs_compile_mnrl_int.h"
 #include "database.h"
 #include "compiler/compiler.h"
 #include "compiler/error.h"
@@ -490,7 +491,7 @@ void parseSymbolSet(CharReach &column, std::string symbol_set) {
 
 //WADDEN
 hs_error_t
-hs_compile_mnrl(const char * graphFN,
+hs_compile_mnrl_int(const char * graphFN,
                      hs_database_t **db,
                      hs_compile_error_t **comp_error,
 					 const Grey &g) {
@@ -809,4 +810,11 @@ hs_compile_mnrl(const char * graphFN,
     }
 }
 
+hs_error_t hs_compile_mnrl(const char * graphFN, unsigned mode,
+                      const hs_platform_info_t *platform, hs_database_t **db,
+                      hs_compile_error_t **error) {
+
+    return hs_compile_mnrl_int(graphFN, mode,
+                                platform, db, error, Grey());
+}
 
