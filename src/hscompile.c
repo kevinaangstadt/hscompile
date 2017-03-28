@@ -16,16 +16,29 @@ int main(int argc, char *argv[]) {
 	printf("Compiling MNRL...\n");
 	hs_database_t *database;
 	hs_compile_error_t *compile_err;
+	
+	r_map *report_map = NULL;
 
 	if (hs_compile_mnrl(mnrlFN,
 						&database,
-						&compile_err) != HS_SUCCESS) {
+						&compile_err,
+						&report_map) != HS_SUCCESS) {
 		fprintf(stderr, "ERROR: Unable to compile MNRL file \"%s\": %s\n",
 				mnrlFN, compile_err->message);
 		hs_free_compile_error(compile_err);
 		return 2;
 	}
+	
+	char *mapping_out;
+	size_t mapping_size;
+	serialize_mapping(&mapping_out, &mapping_size, &report_map);
+	
+	FILE *f_tmp = fopen ("foo.txt", "wb");
+	// write the file
+	fwrite(mapping_out, 1, mapping_size, f_tmp);
 
+	fclose(f_tmp);
+	
 	printf("Serializing...\n");
 	char *ser;
 	size_t size;
@@ -46,6 +59,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// write the file
+	fwrite(mapping_out, 1, mapping_size, f);
 	fwrite(ser, 1, size, f);
 
 	fclose(f);

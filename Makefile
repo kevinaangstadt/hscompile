@@ -5,8 +5,8 @@ BOOST = /opt/boost_1_57_0
 IDIR = ./include
 SRCDIR = ./src
 
-CC = gcc
-CXX = g++
+CC = gcc -g
+CXX = g++ -g
 AR = ar
 LD = ld
 
@@ -16,17 +16,22 @@ LDFLAGS =
 STATICLIB = $(HYPERSCAN)/build/lib/libhs.a $(MNRL)/libmnrl.a
 
 _DEPS = *.h
-_OBJ_HSCOMPILE = hscompile.o hs_compile_mnrl.o 
+_OBJ_HSCOMPILE = hscompile.o hs_compile_mnrl.o
+_OBJ_HSRUN = hsrun.o
 
 ODIR = ./build
 
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 OBJ_HSCOMPILE = $(patsubst %,$(ODIR)/%,$(_OBJ_HSCOMPILE))
+OBJ_HSRUN = $(patsubst %,$(ODIR)/%,$(_OBJ_HSRUN))
 
-all: hscompile
+all: hscompile hsrun
 
 hscompile: $(OBJ_HSCOMPILE)
-	$(CXX) -v $(LDFLAGS) $^ $(STATICLIB) -o $@ 
+	$(CXX) $(LDFLAGS) $^ $(STATICLIB) -o $(ODIR)/$@
+    
+hsrun: $(OBJ_HSRUN)
+	$(CXX) $(LDFLAGS) $^ $(STATICLIB) -o $(ODIR)/$@ 
 
 $(ODIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 	@pwd
@@ -41,5 +46,5 @@ $(ODIR)/%.o: $(SRCDIR)/%.c $(DEPS)
 .PHONY: clean
 
 clean:
-	rm -f $(ODIR)/*.o
+	rm -f $(ODIR)/*.o $(ODIR)/hscompile $(ODIR)/hsrun
 	rmdir $(ODIR)

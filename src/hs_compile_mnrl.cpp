@@ -1,4 +1,5 @@
 
+#include "ht.h"
 #include "allocator.h"
 #include "ue2common.h"
 #include "grey.h"
@@ -494,6 +495,7 @@ namespace ue2 {
     hs_compile_mnrl_int(const char * graphFN,
             hs_database_t **db,
             hs_compile_error_t **comp_error,
+            r_map **report_map,
             const Grey &g) {
         // Check the args: note that it's OK for flags, ids or ext to be null.
         if (!comp_error) {
@@ -547,16 +549,18 @@ namespace ue2 {
     
             NGWrapper &graph = *graph_ptr;
     
-            // For now just register a dummy report code for all reports
-            Report report(EXTERNAL_CALLBACK, 1000);
-            ReportID report_id = ng.rm.getInternalId(report); // register with report manager
+            // initialize dummy report ID index
+            unsigned int report_id_int = 0;
     
             // MNRL read in file name
             // wrap with try/catch later maybe?
             shared_ptr<MNRLNetwork> mnrl_graph = loadMNRL(graphFN);
     
             map<string, shared_ptr<MNRLNode>> mnrl_nodes = mnrl_graph->getNodes();
-    
+            
+            // keep track of report id's
+            map<string, unsigned int> report_id_mapping = map<string, unsigned int>();
+            
             // add nodes
             for(auto n : mnrl_nodes){
     
@@ -597,6 +601,43 @@ namespace ue2 {
                 // report
                 if(node->getReport()) {
                     add_edge(tmp, graph.accept, graph);
+                    
+                    // figure out if this has a report code or not
+                    MNRLReportId rid = node->getReportId();
+                    string mnrl_rid;
+                    
+                    unsigned int hs_report_id;
+                    map<string, unsigned int>::iterator it;
+                    
+                    switch(rid.get_type()) {
+                        case MNRLDefs::ReportIdType::INT:
+                        case MNRLDefs::ReportIdType::STRING:
+                            mnrl_rid = rid.toString();
+                            it = report_id_mapping.find(mnrl_rid);
+                            if(it != report_id_mapping.end()) {
+                                // there was an entry
+                                hs_report_id = it->second;
+                            } else {
+                                // not found, so add
+                                hs_report_id = report_id_int++;
+                                report_id_mapping.insert(map<string, unsigned int>::value_type(mnrl_rid, hs_report_id));
+                            }
+                            break;
+                        default:
+                            // no report ID
+                            hs_report_id = report_id_int++;
+                            mnrl_rid = node->getId();
+                            break;
+                    }
+                    
+                    // store this in our map
+                    insert_mapping(hs_report_id, mnrl_rid.c_str(), report_map);
+                    
+                    
+                    // For now just register a dummy report code for all reports
+                    Report report(EXTERNAL_CALLBACK, report_id_int++);
+                    ReportID report_id = ng.rm.getInternalId(report); // register with report manager
+                    
                     // add report id
                     // should get HState report id, for now, just use our dummy report id
                     graph[tmp].reports.insert(report_id);
@@ -773,18 +814,21 @@ namespace ue2 {
                 DEBUG_PRINTF("NFA addGraph failed.\n");
                 throw CompileError("Error compiling expression.");
             }
-            printf("Added graph.\n");
+            printf("     Added graph.\n");
             // END NFA CONSTRUCTION CODE
-    
+            
+            printf("Building database...\n");
             // Build database using graph
             unsigned length = 0;
             struct hs_database *out = build(ng, &length);
             assert(out);    // should have thrown exception on error
             assert(length);
+            
+            printf("     Built database.\n");
     
             *db = out;
             *comp_error = nullptr;
-    
+            
             return HS_SUCCESS;
         }
         catch (const CompileError &e) {
@@ -813,7 +857,7 @@ namespace ue2 {
 };
 
 hs_error_t hs_compile_mnrl(const char * graphFN, hs_database_t **db,
-            hs_compile_error_t **error) {
+            hs_compile_error_t **error, r_map **report_map) {
     
-        return ue2::hs_compile_mnrl_int(graphFN, db, error, ue2::Grey());
+        return ue2::hs_compile_mnrl_int(graphFN, db, error, report_map, ue2::Grey());
     }

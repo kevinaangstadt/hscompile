@@ -2,6 +2,7 @@
 #define HS_COMPILE_MNRL_H_
 
 #include "hs_compile.h"
+#include "ht.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -70,7 +71,8 @@ extern "C"
  */
 
 hs_error_t hs_compile_mnrl(const char *graphFN,
-		hs_database_t **db, hs_compile_error_t **error);
+		hs_database_t **db, hs_compile_error_t **error,
+        r_map **report_map);
 
 #ifdef __cplusplus
 } /* extern "C" */

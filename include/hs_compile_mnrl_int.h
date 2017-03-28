@@ -3,11 +3,13 @@
 
 #include "ue2common.h"
 #include "hs.h"
+#include "ht.h"
 
 #ifdef __cplusplus
 namespace ue2 {
 hs_error_t hs_compile_mnrl_int(const char * graphFN,
 		hs_database_t **db,
+        r_map **report_map,
 		hs_compile_error_t **comp_error, const Grey &g);
 
 }
