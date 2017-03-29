@@ -5,14 +5,12 @@
 #include "string.h"
 #include "stdio.h"
 
-struct hs_report_mapping {
+typedef struct hs_report_mapping_t {
     unsigned int id;
     UT_hash_handle hh;
     char *name;
     char *report;
-};
-
-typedef struct hs_report_mapping r_map;
+} r_map;
 
 void insert_mapping (unsigned int id, const char *name, const char *report, r_map **ht) {
     r_map *s;
@@ -47,6 +45,15 @@ void print_mapping (r_map **ht) {
     
     HASH_ITER(hh, *ht, s, tmp) {
         printf("%u :: %s :: %s \n", s->id, s->name, s->report);
+    }
+}
+
+void delete_all(r_map **ht) {
+    r_map *curr, *tmp;
+
+    HASH_ITER(hh, *ht, curr, tmp) {
+        HASH_DEL(*ht, curr);  /* delete it (users advances to next) */
+        free(curr);             /* free it */
     }
 }
 

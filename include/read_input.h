@@ -30,6 +30,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Change log
+ * 2017-03-28: KAA changed lenght to be of type size_t *
+ * 2017-03-27: Initial Code
+ */
+
 /**
  * Fill a data buffer from the given filename, returning it and filling @a
  * length with its length. Returns NULL on failure.

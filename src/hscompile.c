@@ -33,11 +33,6 @@ int main(int argc, char *argv[]) {
 	size_t mapping_size;
 	serialize_mapping(&mapping_out, &mapping_size, &report_map);
 	
-	FILE *f_tmp = fopen ("foo.txt", "wb");
-	// write the file
-	fwrite(mapping_out, 1, mapping_size, f_tmp);
-
-	fclose(f_tmp);
 	
 	printf("Serializing...\n");
 	char *ser;
@@ -64,6 +59,10 @@ int main(int argc, char *argv[]) {
 
 	fclose(f);
 
+	//clean up
+	delete_all(&report_map);
+	free(mapping_out);
+	free(ser);
 	printf("Compilation done.\n");
 
 	return 0;
