@@ -5,8 +5,8 @@ BOOST = /opt/boost_1_57_0
 IDIR = ./include
 SRCDIR = ./src
 
-CC = gcc -g
-CXX = g++ -g
+CC = gcc 
+CXX = g++ 
 AR = ar
 LD = ld
 
