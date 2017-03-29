@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <omp.h>
 #include "hs.h"
 #include "hs_compile_mnrl.h"
 #include "ht.h"
@@ -39,7 +40,7 @@ static int eventHandler(unsigned int id, unsigned long long from,
 
 
 static void usage(char *prog) {
-    fprintf(stderr, "Usage: %s <hs databases> <input files>\n", prog);
+    fprintf(stderr, "Usage: %s [-t NUM_TREADS] <hs databases> <input files>\n", prog);
 }
 
 int main(int argc, char *argv[]) {
@@ -51,10 +52,26 @@ int main(int argc, char *argv[]) {
     unsigned int num_dbs = 0;
     unsigned int num_inputs = 0;
     
+    int num_threads = 0;
+    
     char *db_fns[argc];
     char *input_fns[argc];
     
     for ( int i=1; i<argc; i++ ) {
+        
+        if ( strcmp("-t", argv[i]) == 0 ) {
+            // setting number of threads
+            
+            if ( i+1 <= argc ) {
+                i++;
+                num_threads = atoi(argv[i]);
+            } else {
+                usage(argv[0]);
+                return 44;  
+            }
+            continue;
+        }
+        
         size_t len = strlen(argv[i]);
         if ( len < 4 ) {
             input_fns[num_inputs] = argv[i];
@@ -276,6 +293,10 @@ int main(int argc, char *argv[]) {
     //printf("Simulating graph on input data with Hyperscan...\n");
     
     //okay do the scanning
+    if(num_threads > 0) {
+        omp_set_dynamic(1);
+        omp_set_num_threads(num_threads);
+    }
     #pragma omp parallel for
     for ( int i=0; i<num_inputs*num_dbs; i++ ) {
         run_ctx ctx = contexts[i];
@@ -296,8 +317,6 @@ int main(int argc, char *argv[]) {
         
         hs_free_scratch(ctx.scratch);
     }
-    
-    
     
     // cleanup
     for ( int i=0; i<num_dbs; i++ ) {
