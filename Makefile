@@ -16,7 +16,7 @@ LDFLAGS =
 STATICLIB = $(HYPERSCAN)/build/lib/libhs.a $(MNRL)/libmnrl.a
 
 _DEPS = *.h
-_OBJ_HSCOMPILE = hscompile.o hs_compile_mnrl.o
+_OBJ_HSCOMPILE = hscompile.o hs_compile_mnrl.o parse_symbol_set.o
 _OBJ_HSRUN = hsrun.o
 
 ODIR = ./build
