@@ -4,6 +4,10 @@
 #include <string.h>
 #include "hs.h"
 #include "hs_compile_mnrl.h"
+#include "ht.h"
+
+// make our report mapping global
+r_map *report_map = NULL;
 
 /**
  * This is the function that will be called for each match that occurs. @a ctx
@@ -13,7 +17,12 @@
  */
 static int eventHandler(unsigned int id, unsigned long long from,
                         unsigned long long to, unsigned int flags, void *ctx) {
-    printf("Match at id::offset %u::%llu\n", id, to);
+    r_map *m = find_mapping(id, &report_map);
+    if(m == NULL) {
+        printf("couldn't find mapping: %u\n", id);
+        return 1;
+    }    
+    printf("Match at id::code::offset %s::%s::%llu\n", m->name, m->report, to);
     return 0;
 }
 
@@ -21,7 +30,7 @@ static int eventHandler(unsigned int id, unsigned long long from,
  * Fill a data buffer from the given filename, returning it and filling @a
  * length with its length. Returns NULL on failure.
  */
-static char *readInputData(const char *inputFN, unsigned int *length) {
+static char *readInputData(const char *inputFN, size_t *length) {
     
 
     FILE *f = fopen(inputFN, "rb");
@@ -40,6 +49,7 @@ static char *readInputData(const char *inputFN, unsigned int *length) {
         return NULL;
     }
     long dataLen = ftell(f);
+    
     if (dataLen < 0) {
         fprintf(stderr, "ERROR: ftell() failed: %s\n", strerror(errno));
         fclose(f);
@@ -102,7 +112,7 @@ int main(int argc, char *argv[]) {
     
     
     // First, read in the database
-    unsigned int length;
+    size_t length;
     char *hsSerDB;
     
     hsSerDB = readInputData(hsDB, &length);
@@ -111,10 +121,18 @@ int main(int argc, char *argv[]) {
         return 2;
     }
     
+    // extract the mapping
+    size_t map_length;
+    unserialize_mapping (hsSerDB, &map_length, &report_map);
+    
+    // redo the database pointer 
+    hsSerDB += map_length ;
+    length -= map_length ;
+    
     // Next, we try to deserialize
     hs_database_t *database;
     hs_compile_error_t *compile_err;
-    
+
     if(hs_deserialize_database(hsSerDB, length, &database) != HS_SUCCESS) {
         fprintf(stderr, "ERROR: Unable to load HyperScan database file \"%s\": %s\n",
 				hsDB, compile_err->message);

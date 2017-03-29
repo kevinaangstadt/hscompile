@@ -108,7 +108,8 @@ namespace ue2 {
             map<string, shared_ptr<MNRLNode>> mnrl_nodes = mnrl_graph->getNodes();
             
             // keep track of report id's
-            map<string, unsigned int> report_id_mapping = map<string, unsigned int>();
+            // FIXME need to decide about merging
+            // map<string, unsigned int> report_id_mapping = map<string, unsigned int>();
             
             // add nodes
             for(auto n : mnrl_nodes){
@@ -152,17 +153,23 @@ namespace ue2 {
                     add_edge(tmp, graph.accept, graph);
                     
                     // figure out if this has a report code or not
-                    MNRLReportId rid = node->getReportId();
-                    string mnrl_rid;
+                    shared_ptr<MNRLReportId> rid = node->getReportId();
+                    string mnrl_rid = rid->toString();
+                    string mnrl_id = node->getId();
                     
                     unsigned int hs_report_id;
                     map<string, unsigned int>::iterator it;
                     
-                    switch(rid.get_type()) {
+                    
+                    /* FIXME how do we handle reportId's?
+                             * Do thy get merged or no?
+                    switch(rid->get_type()) {
                         case MNRLDefs::ReportIdType::INT:
                         case MNRLDefs::ReportIdType::STRING:
-                            mnrl_rid = rid.toString();
+                            mnrl_rid = rid->toString();
+                            
                             it = report_id_mapping.find(mnrl_rid);
+                            
                             if(it != report_id_mapping.end()) {
                                 // there was an entry
                                 hs_report_id = it->second;
@@ -171,6 +178,7 @@ namespace ue2 {
                                 hs_report_id = report_id_int++;
                                 report_id_mapping.insert(map<string, unsigned int>::value_type(mnrl_rid, hs_report_id));
                             }
+                            hs_report_id = report_id_int++;
                             break;
                         default:
                             // no report ID
@@ -178,13 +186,15 @@ namespace ue2 {
                             mnrl_rid = node->getId();
                             break;
                     }
+                    */
+                    hs_report_id = report_id_int++;
                     
                     // store this in our map
-                    insert_mapping(hs_report_id, mnrl_rid.c_str(), report_map);
+                    insert_mapping(hs_report_id, mnrl_id.c_str(), mnrl_rid.c_str(), report_map);
                     
                     
                     // For now just register a dummy report code for all reports
-                    Report report(EXTERNAL_CALLBACK, report_id_int++);
+                    Report report(EXTERNAL_CALLBACK, hs_report_id);
                     ReportID report_id = ng.rm.getInternalId(report); // register with report manager
                     
                     // add report id
