@@ -225,148 +225,6 @@ namespace ue2 {
     
             }
     
-            /*
-    
-            // Open file
-            string line;
-            string graphFN_tmp(graphFN);
-            ifstream graph_file(graphFN_tmp);
-            if(graph_file.is_open()){
-    
-                // first line is the number of nodes
-                getline(graph_file, line);
-                int num_nodes = stoi(line,nullptr,0);
-                //cout << "NUM NODES: " << num_nodes << endl;
-    
-                // For now just register a dummy report code for all reports
-                Report report(EXTERNAL_CALLBACK, 1000);
-                ReportID report_id = ng.rm.getInternalId(report); // register with report manager
-    
-                // parse nodes
-                for(int i = 0; i < num_nodes; i++){
-                    //cout << "Parsing node: " << i << endl;
-                    // next input is node names, char reach, and accept/report
-                    // FORMAT: name char_reach startDs start report
-                    // EXAMPLE: __blah__ 000000001000001000100000000001000...000 1 0 0
-    
-                    // get line
-                    getline(graph_file, line);
-    
-                    // tokenize
-                    string buf;
-                    stringstream ss(line);
-                    vector<string> tokens;
-                    while (ss >> buf)
-                        tokens.push_back(buf);
-    
-                    // extract name and create new vertex
-                    string name = tokens[0];
-                    NFAVertex tmp = add_vertex(graph);
-                    vertices[name] = tmp;
-    
-                    // extract char reach
-                    string char_reach = tokens[1];
-                    if(char_reach.size() != 256){
-                        cout << "CHAR REACH ISNT 256! " << char_reach.size() << " Exiting..." << endl;
-                        exit(1);
-                    }
-                    graph[tmp].char_reach = CharReach();
-                    graph[tmp].char_reach.clear();
-                    for(int index = 0; index < 256; ++index) {
-                        if(char_reach[index] == '1'){
-                            graph[tmp].char_reach.set(255 - index);
-                            //cout << "SET BIT NUMBER: " << (255-index) << endl;
-                        }
-                    }
-    
-                    // extract start
-                    string start = tokens[2];
-                    if(start.compare("1") == 0){
-                        //cout << "IS START" << endl;
-                        add_edge(graph.start, tmp, graph);
-                    }
-                    // extract startDs
-                    string startDs = tokens[3];
-                    if(startDs.compare("1") == 0){
-                        //cout << "IS STARTDS" << endl;
-                        add_edge(graph.startDs, tmp, graph);
-                    }
-    
-                    // extract accept
-                    string accept = tokens[4];
-                    if(accept.compare("1") == 0){
-                        //cout << "IS ACCEPT" << endl;
-                        add_edge(tmp, graph.accept, graph);
-                        //register report code here
-                        graph[tmp].reports.insert(report_id);
-                    }
-    
-                    // print line
-                    //for(int j = 0; j < 5; j++)
-                        //cout << tokens[j] << endl;
-                }
-    
-                // Parse edges
-                while(!graph_file.eof()){
-                    getline(graph_file, line);
-                    if(!line.empty()){
-                        //cout << line << endl;
-                        string from;
-                        string to;
-                        stringstream ss2(line);
-                        ss2 >> from;
-                        while (ss2 >> to){
-                            //cout << "ADDING EDGE" << endl;
-                            add_edge(vertices[from], vertices[to], graph);
-                        }
-                    }
-                }
-    
-                graph_file.close();
-    
-            }else{
-                cout << "Could not open graph file!" << endl;
-                exit(1);
-            }
-             */
-    
-            /*
-            NGWrapper &graph = *graph_ptr;
-    
-            // Register reports
-            Report report(EXTERNAL_CALLBACK, 1000);
-            ReportID id = ng.rm.getInternalId(report); // register with report manager
-    
-            // Build graph
-            // Construct vertices
-            // a
-            NFAVertex a = add_vertex(graph);
-            graph[a].char_reach = CharReach('a');
-    
-            // b
-            NFAVertex b = add_vertex(graph);
-            graph[b].char_reach = CharReach('b');
-    
-            // c
-            NFAVertex c = add_vertex(graph);
-            graph[c].char_reach = CharReach('c');
-    
-    
-    
-            // Construct edges
-            add_edge(graph.startDs, a, graph);
-            add_edge(graph.start, a, graph);
-            add_edge(a, b, graph);
-            add_edge(b, c, graph);
-            add_edge(c, graph.accept, graph);
-    
-            // Add reports
-            graph[c].reports.insert(id);
-    
-    
-             */
-    
-    
             // add graph
             printf("Attempting to add graph...\n");
             if (!ng.addGraph(graph)) {
@@ -402,6 +260,11 @@ namespace ue2 {
             printf("BAD ALLOC!\n");
             *db = nullptr;
             *comp_error = const_cast<hs_compile_error_t *>(&hs_enomem);
+            return HS_COMPILER_ERROR;
+        } catch (MNRL::MNRLError::MNRLError &e) {
+            printf("MNRL ERROR!\n");
+            *comp_error = generateCompileError(e.what(), -1);
+            *db = nullptr;
             return HS_COMPILER_ERROR;
         }
         catch (...) {
