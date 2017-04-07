@@ -18,20 +18,29 @@ STATICLIB = $(HYPERSCAN)/build/lib/libhs.a $(MNRL)/libmnrl.a
 _DEPS = *.h
 _OBJ_HSCOMPILE = hscompile.o hs_compile_mnrl.o parse_symbol_set.o
 _OBJ_HSRUN = hsrun.o
+_OBJ_PCRE2MNRL = pcre2mnrl.o hs_pcre_mnrl.o dump_charclass.o
 
 ODIR = ./build
 
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 OBJ_HSCOMPILE = $(patsubst %,$(ODIR)/%,$(_OBJ_HSCOMPILE))
 OBJ_HSRUN = $(patsubst %,$(ODIR)/%,$(_OBJ_HSRUN))
+OBJ_PCRE2MNRL = $(patsubst %,$(ODIR)/%,$(_OBJ_PCRE2MNRL))
 
-all: hscompile hsrun
+all: hscompile hsrun pcre2mnrl
+
+debug: CXXFLAGS += -DDEBUG -g
+debug: CFLAGS += -DDEBUG -g
+debug: hscompile hsrun pcre2mnrl
 
 hscompile: $(OBJ_HSCOMPILE)
 	$(CXX) $(LDFLAGS) $^ $(STATICLIB) -o $(ODIR)/$@
     
 hsrun: $(OBJ_HSRUN)
-	$(CXX) $(LDFLAGS) $^ $(STATICLIB) -o $(ODIR)/$@ 
+	$(CXX) $(LDFLAGS) $^ $(STATICLIB) -o $(ODIR)/$@
+    
+pcre2mnrl: $(OBJ_PCRE2MNRL)
+	$(CXX) $(LDFLAGS) $^ $(STATICLIB) -o $(ODIR)/$@
 
 $(ODIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 	@pwd
@@ -46,5 +55,5 @@ $(ODIR)/%.o: $(SRCDIR)/%.c $(DEPS)
 .PHONY: clean
 
 clean:
-	rm -f $(ODIR)/*.o $(ODIR)/hscompile $(ODIR)/hsrun
+	rm -f $(ODIR)/*.o $(ODIR)/hscompile $(ODIR)/hsrun $(ODIR)/pcre2mnrl
 	rmdir $(ODIR)
