@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdbool.h>
 #include <omp.h>
 #include "hs.h"
 #include "hs_compile_mnrl.h"
@@ -16,6 +17,7 @@ typedef struct run_ctx_t {
     size_t length;
     unsigned int inp_off; //for the location in filename list
     unsigned int db_off; // for the location in filename list
+    unsigned int *counts; // for support values, if used
 } run_ctx;
 
 /**
@@ -38,9 +40,22 @@ static int eventHandler(unsigned int id, unsigned long long from,
     return 0;
 }
 
+static int supportEventHandler(unsigned int id, unsigned long long from,
+                               unsigned long long to, unsigned int flags, void *ctx) {
+    
+    unsigned int *support = (unsigned int *) ctx;
+    
+    #pragma omp atomic
+    support[id]++;
+    
+    return 0;
+}
+
 
 static void usage(char *prog) {
-    fprintf(stderr, "Usage: %s [-t NUM_TREADS] <hs databases> <input files>\n", prog);
+    fprintf(stderr, "Usage: %s [-t NUM_TREADS] [--support] <hs databases> <input files>\n", prog);
+    fprintf(stderr, "     -t NUM_THREADS     use no more than NUM_THREADS threads\n");
+    fprintf(stderr, "     --support          enable aggregation of reports; print final counts\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -51,6 +66,8 @@ int main(int argc, char *argv[]) {
     
     unsigned int num_dbs = 0;
     unsigned int num_inputs = 0;
+    
+    bool support = false;
     
     int num_threads = 0;
     
@@ -69,6 +86,14 @@ int main(int argc, char *argv[]) {
                 usage(argv[0]);
                 return 44;  
             }
+            continue;
+        }
+        
+        if ( strcmp("--support", argv[i]) == 0 ) {
+            // turn on support reporting
+            
+            support = true;
+            
             continue;
         }
         
@@ -100,6 +125,7 @@ int main(int argc, char *argv[]) {
     hs_database_t *dbs_to_delete[num_dbs];
     char *inputs_to_delete[num_inputs];
     r_map *rmaps_to_delete[num_dbs];
+    unsigned int *supports_to_delete[num_dbs];
     
     //loop through the inputs to get input data
     for ( int j=0; j < num_inputs; j++ ) {
@@ -172,6 +198,10 @@ int main(int argc, char *argv[]) {
                 // deallocate previous databases
                 free(dbs_to_delete[j]);
                 
+                if(support){
+                    free(supports_to_delete[j]);
+                }
+                
                 // delete report map
                 delete_all(&(rmaps_to_delete[j]));
                 
@@ -187,6 +217,13 @@ int main(int argc, char *argv[]) {
         // keep track of the database
         dbs_to_delete[i] = database;
         
+        // make a support array if needed
+        if(support) {
+            supports_to_delete[i] = (unsigned int*) malloc(sizeof(unsigned int) * count_mapping(&report_map));
+        } else {
+            supports_to_delete[i] = NULL;
+        }
+        
         //printf("Allocating scratch...\n");
         hs_scratch_t *db_scratch = NULL;
         if (hs_alloc_scratch(database, &db_scratch) != HS_SUCCESS) {
@@ -200,10 +237,18 @@ int main(int argc, char *argv[]) {
                 free(inputs_to_delete[j]);
             }
             
+            if(support) {
+                free(supports_to_delete[i]);
+            }
+            
             
             for(int j=0; j<i; j++) {
                 // deallocate previous databases
                 free(dbs_to_delete[j]);
+                
+                if(support) {
+                    free(supports_to_delete[j]);
+                }
                 
                 // delete report map
                 delete_all(&(rmaps_to_delete[j]));
@@ -253,10 +298,18 @@ int main(int argc, char *argv[]) {
                     free(inputs_to_delete[j]);
                 }
                 
+                if(support) {
+                    free(supports_to_delete[i]);
+                }
+                
                 
                 for(int j=0; j<i; j++) {
                     // deallocate previous databases
                     free(dbs_to_delete[j]);
+                    
+                    if(support) {
+                        free(supports_to_delete[j]);
+                    }
                     
                     // delete report map
                     delete_all(&(rmaps_to_delete[j]));
@@ -277,6 +330,7 @@ int main(int argc, char *argv[]) {
             contexts[i*num_inputs+j].length = inputs_length[j];
             contexts[i*num_inputs+j].db_off = i;
             contexts[i*num_inputs+j].inp_off = j;
+            contexts[i*num_inputs+j].counts = supports_to_delete[i];
             
             
             /* Scanning is complete, any matches have been handled, so now we just
@@ -301,27 +355,50 @@ int main(int argc, char *argv[]) {
     for ( int i=0; i<num_inputs*num_dbs; i++ ) {
         run_ctx ctx = contexts[i];
         
-        // scan each input and report runtime
-        if (hs_scan(ctx.database, ctx.inputData, ctx.length, 0, ctx.scratch, eventHandler,
-                    ctx.report_map) != HS_SUCCESS) {
-            fprintf(stderr, "ERROR: Unable to scan input buffer '%s' with database '%s'.\n", input_fns[ctx.inp_off], db_fns[ctx.db_off]);
-            /*
-             * No need to stop, just keep trying
-            hs_free_scratch(scratch);
-            free(inputData);
-            free(hsmSer);
-            hs_free_database(database);
-            return 6;
-            */
+        if(!support) {
+            // scan each input and report runtime
+            if (hs_scan(ctx.database, ctx.inputData, ctx.length, 0, ctx.scratch, eventHandler,
+                        ctx.report_map) != HS_SUCCESS) {
+                fprintf(stderr, "ERROR: Unable to scan input buffer '%s' with database '%s'.\n", input_fns[ctx.inp_off], db_fns[ctx.db_off]);
+                /*
+                 * No need to stop, just keep trying
+                hs_free_scratch(scratch);
+                free(inputData);
+                free(hsmSer);
+                hs_free_database(database);
+                return 6;
+                */
+            }
+        } else {
+            if (hs_scan(ctx.database, ctx.inputData, ctx.length, 0, ctx.scratch, supportEventHandler,
+                        ctx.counts) != HS_SUCCESS) {
+                fprintf(stderr, "ERROR: Unable to scan input buffer '%s' with database '%s'.\n", input_fns[ctx.inp_off], db_fns[ctx.db_off]);
+            }
         }
         
-        hs_free_scratch(ctx.scratch);
+    }
+    // print out supports
+    if(support) {
+        printf("File, ID, Report ID, Count\n");
+        for ( int i=0; i<num_dbs; i++ ) {
+            r_map *mapping = rmaps_to_delete[i];
+            for ( int j=0; j<count_mapping(&mapping); j++) {
+                r_map *m = find_mapping(j, &mapping);
+                printf("%s, %s, %s, %u\n", db_fns[i], m->name, m->report, supports_to_delete[i][j]);
+            }
+        }
     }
     
     // cleanup
+    for ( int i=0; i<num_inputs*num_dbs; i++ ) {
+        run_ctx ctx = contexts[i];
+        hs_free_scratch(ctx.scratch);
+    }
+    
     for ( int i=0; i<num_dbs; i++ ) {
         free(dbs_to_delete[i]);
         delete_all(&(rmaps_to_delete[i]));
+        free(supports_to_delete[i]);
     }
     
     for ( int i=0; i<num_inputs; i++ ) {

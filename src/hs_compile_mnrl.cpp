@@ -130,7 +130,7 @@ namespace ue2 {
                 // add charset
                 graph[tmp].char_reach = CharReach();
                 graph[tmp].char_reach.clear();
-    
+                
                 parseSymbolSet(graph[tmp].char_reach, node->getSymbolSet());
     
                 // handle starts

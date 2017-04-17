@@ -23,10 +23,12 @@ void insert_mapping (unsigned int id, const char *name, const char *report, r_ma
         HASH_ADD_INT( *ht, id, s );
     }
     
-    char *tmp = (char *)malloc(strlen(name));
-    char *tmp2 = (char *)malloc(strlen(report));
+    char *tmp = (char *)malloc(strlen(name)+1);
+    char *tmp2 = (char *)malloc(strlen(report)+1);
     strcpy(tmp, name);
+    tmp[strlen(name)] = '\000';
     strcpy(tmp2, report);
+    tmp2[strlen(report)] = '\000';
     s->name = tmp;
     s->report = tmp2;
     
@@ -48,11 +50,17 @@ void print_mapping (r_map **ht) {
     }
 }
 
+unsigned int count_mapping (r_map **ht) {
+    return HASH_COUNT(*ht);
+}
+
 void delete_all(r_map **ht) {
     r_map *curr, *tmp;
 
     HASH_ITER(hh, *ht, curr, tmp) {
         HASH_DEL(*ht, curr);  /* delete it (users advances to next) */
+        free(curr->name);
+        free(curr->report);
         free(curr);             /* free it */
     }
 }
