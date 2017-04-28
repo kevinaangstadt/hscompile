@@ -11,7 +11,7 @@ AR = ar
 LD = ld
 
 CFLAGS = -fopenmp -I$(IDIR) -iquote $(HYPERSCAN)/src -iquote $(HYPERSCAN)/build --std=c99
-CXXFLAGS = -fopenmp -I$(IDIR) -I$(BOOST)/include -iquote $(HYPERSCAN)/src -iquote $(HYPERSCAN)/build -I$(MNRL)/include -I$(MNRL)/lib/json11 -I$(MNRL)/lib/valijson/include -I$(MNRL)/lib/valijson/thirdparty/nlohmann-json-1.1.0 --std=c++11
+CXXFLAGS = -fopenmp -I$(IDIR) -I$(BOOST)/include -iquote $(HYPERSCAN)/src -iquote $(HYPERSCAN)/build -I$(MNRL)/include --std=c++11
 LDFLAGS = -fopenmp
 STATICLIB = $(HYPERSCAN)/build/lib/libhs.a $(MNRL)/libmnrl.a
 
