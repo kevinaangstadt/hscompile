@@ -84,6 +84,7 @@ add_executable(pcre2mnrl ${pcre2mnrl_SRC})
 # we always want to link with CXX
 set_target_properties(hscompile hsrun pcre2mnrl
     PROPERTIES LINKER_LANGUAGE CXX
+    C_STANDARD 99
 )
 
 target_compile_features(hscompile PRIVATE cxx_range_for)

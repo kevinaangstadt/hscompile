@@ -230,7 +230,7 @@ namespace ue2 {
                             shared_ptr<MNRLNode> n = mnrl.getNodeById(mnrl_id.str());
                             
                             // deal with EOD
-                            n->setEnable(convert_enable(src_idx));
+                            n->setEnable(convert_enable(dst_idx));
                             
                             n->setReport(true);
                             
