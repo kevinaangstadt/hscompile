@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <boost/regex.hpp>
+#include <boost/algorithm/string_regex.hpp>
 #include "hs.h"
 #include "hs_pcre_mnrl.h"
 #include <mnrl.hpp>
@@ -24,17 +26,58 @@ int main(int argc, char *argv[]) {
     
     unsigned i = 0;
     while(getline(infile, line)) {
-        // check that first and last char are '/'
-        if(line.length() < 1 || line[0] != '/' || line[line.length()-1] != '/') {
+        
+        vector<string> line_tokens;
+        boost::algorithm::split_regex(line_tokens, line, boost::regex("^/|/(?=[^/]*$)"), boost::match_default);
+        
+        
+        
+        // check that we have 3 parts (i.e. 2 / characters)
+        if(line_tokens.size() != 3) {
             cerr << "Rule on line " << i+1 << " was not surrounded by slashes!" << endl;
             exit(5);
         }
         
-        // strip the slashes
-        expressions.push_back(line.substr(1,line.length()-2));
-        cexpressions.push_back(expressions[i].c_str());
-        ids.push_back(i);
-        flags.push_back(0);
+        /*
+         * line_tokens[0] == empty
+         * line_tokens[1] == the expression
+         * line_tokens[2] == the modifiers
+         */
+        
+        // convert the modifiers
+        int e_flags = 0;
+        bool failed = false;
+        if(line_tokens[2].size() > 0) {
+            for(char &m : line_tokens[2]) {
+                // PAY ATTENTION note that we are ORing things together
+                // DON'T FORGET A BREAK
+                switch(m) {
+                case 'i':
+                    e_flags |= HS_FLAG_CASELESS;
+                    break;
+                case 'm':
+                    e_flags |= HS_FLAG_MULTILINE;
+                    break;
+                case 's':
+                    e_flags |= HS_FLAG_DOTALL;
+                    break;
+                default:
+                    failed = true;
+                    cerr << "Unsupported modifier '" << m << "' on line " << i+1 << endl;
+                }
+            }
+        }
+        
+        
+        // if we failed to parse, continue
+        if(failed) {
+            cerr << "Rule on line " << i+1 << " had unsupported modifiers, skipping" << endl;
+        } else {
+            expressions.push_back(line_tokens[1]);
+            cexpressions.push_back(line_tokens[1].c_str());
+            ids.push_back(i);
+            flags.push_back(e_flags);
+        }
         
         i++;
     }

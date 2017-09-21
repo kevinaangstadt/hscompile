@@ -5,7 +5,7 @@ project(hscompile C CXX)
 # deal with Boost
 set(BOOST_MINVERSION 1.57.0)
 
-find_package(Boost ${BOOST_MINVERSION} QUIET)
+find_package(Boost ${BOOST_MINVERSION} QUIET COMPONENTS regex)
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Boost ${BOOST_MINVERSION} or later not found. Either install system packages if available or set the CMake BOOST_ROOT variable.")
 endif()
@@ -93,4 +93,4 @@ target_compile_features(pcre2mnrl PRIVATE cxx_range_for)
 
 target_link_libraries(hscompile ${HS_BUILD_DIR}/lib/libhs.a ${MNRL_SOURCE_DIR}/libmnrl.a)
 target_link_libraries(hsrun ${HS_BUILD_DIR}/lib/libhs.a)
-target_link_libraries(pcre2mnrl ${HS_BUILD_DIR}/lib/libhs.a ${MNRL_SOURCE_DIR}/libmnrl.a)
+target_link_libraries(pcre2mnrl ${HS_BUILD_DIR}/lib/libhs.a ${MNRL_SOURCE_DIR}/libmnrl.a ${Boost_LIBRARIES})
