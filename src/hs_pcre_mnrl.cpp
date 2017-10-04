@@ -152,7 +152,7 @@ namespace ue2 {
             
             // add the node
             mnrl.addHState(
-                describeClass(reach, 8),
+                describeClass(reach, SIZE_MAX),
                 node_mode,
                 node_id.str(),
                 false,
