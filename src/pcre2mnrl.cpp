@@ -1,8 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
-#include <boost/regex.hpp>
-#include <boost/algorithm/string_regex.hpp>
+#include <boost/lexical_cast.hpp>
 #include "hs.h"
 #include "hs_pcre_mnrl.h"
 #include <mnrl.hpp>
@@ -28,18 +27,43 @@ int main(int argc, char *argv[]) {
     while(getline(infile, line)) {
         
         vector<string> line_tokens;
-        boost::algorithm::split_regex(line_tokens, line, boost::regex("^/|/(?=[^/]*$)"), boost::match_default);
         
+        int colon = -1;
+        int first_slash = -1;
+        int second_slash = -1;
         
+        unsigned int j=0;
+        for(const char &c : line) {
+            if(first_slash < 0 && c == ':') {
+                colon = j;
+            } else if (c == '/') {
+                if(first_slash < 0) {
+                    first_slash = j;
+                } else {
+                    second_slash = j;
+                }
+            }
+            j++;
+        }
         
         // check that we have 3 parts (i.e. 2 / characters)
-        if(line_tokens.size() != 3) {
+        if(first_slash < 0 || second_slash < 0) {
             cerr << "Rule on line " << i+1 << " was not surrounded by slashes!" << endl;
             exit(5);
         }
         
+        if(colon < 0) {
+            line_tokens.push_back("");
+        } else {
+            line_tokens.push_back(line.substr(0,colon));
+        }
+        
+        // push the expressions and modifiers
+        line_tokens.push_back(line.substr(first_slash+1, second_slash));
+        line_tokens.push_back(line.substr(second_slash+1, line.size()));
+        
         /*
-         * line_tokens[0] == empty
+         * line_tokens[0] == empty/id
          * line_tokens[1] == the expression
          * line_tokens[2] == the modifiers
          */
@@ -75,7 +99,19 @@ int main(int argc, char *argv[]) {
         } else {
             expressions.push_back(line_tokens[1]);
             cexpressions.push_back(expressions.back().c_str());
-            ids.push_back(i);
+            if(line_tokens[0].size() != 0) {
+                try
+                {
+                    ids.push_back(boost::lexical_cast<int>(line_tokens[0]));
+                }
+                catch(boost::bad_lexical_cast &)
+                {
+                    cerr << "Warning: could not convert ID on line " << i+1 << " to an integer; using line number." << endl;
+                    ids.push_back(i);
+                }
+            } else {
+                ids.push_back(i);
+            }
             flags.push_back(e_flags);
         }
         
