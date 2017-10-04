@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
             cerr << "Rule on line " << i+1 << " had unsupported modifiers, skipping" << endl;
         } else {
             expressions.push_back(line_tokens[1]);
-            cexpressions.push_back(line_tokens[1].c_str());
+            cexpressions.push_back(expressions.back().c_str());
             ids.push_back(i);
             flags.push_back(e_flags);
         }
