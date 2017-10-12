@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
         }
         
         // push the expressions and modifiers
-        line_tokens.push_back(line.substr(first_slash+1, second_slash));
+        line_tokens.push_back(line.substr(first_slash+1, second_slash-(first_slash+1)));
         line_tokens.push_back(line.substr(second_slash+1, line.size()));
         
         /*
