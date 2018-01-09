@@ -1,8 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
-#include <boost/regex.hpp>
-#include <boost/algorithm/string_regex.hpp>
+#include <boost/lexical_cast.hpp>
 #include "hs.h"
 #include "hs_pcre_mnrl.h"
 #include <mnrl.hpp>
@@ -35,8 +34,7 @@ int main(int argc, char *argv[]) {
         
         size_t start_loc = line.find_first_of("/");
         size_t end_loc = line.find_last_of("/");
-        
-        
+
         // check that we have 3 parts (i.e. 2 / characters)
         if(start_loc == string::npos || end_loc == string::npos){
             cerr << "Rule on line " << i+1 << " was not surrounded by slashes!" << endl;
@@ -73,22 +71,24 @@ int main(int argc, char *argv[]) {
                     //cerr << "Unsupported modifier '" << m << "' on line " << i+1 << endl;
                 }
             }
-        }
-        
+        }        
         
         // if we failed to parse, continue
         if(failed) {
-            //cerr << "Rule on line " << i+1 << " had unsupported modifiers, skipping" << endl;
+            cerr << "Rule on line " << i+1 << " had unsupported modifiers, skipping" << endl;
         } else {
+
             expressions.push_back(expr);
             const char *cexpr = strdup(expr.c_str());
             cexpressions.push_back(cexpr);
+
+            //
             ids.push_back(i);
+
             flags.push_back(e_flags);
         }
         
-        i++;
-        
+        i++;        
     }
 
     

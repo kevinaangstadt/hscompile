@@ -48,6 +48,8 @@ include_directories(${HS_SOURCE_DIR})
 include_directories(${HS_SOURCE_DIR}/src)
 include_directories(${HS_BUILD_DIR})
 
+include_directories(${Boost_INCLUDE_DIR})
+
 include_directories(${MNRL_SOURCE_DIR}/include)
 
 set(hscompile_SRC
