@@ -105,7 +105,7 @@ namespace ue2 {
                         column.setRange(range_start,c);
                         range_set = false;
                     }
-    
+                    escaped = false;
                     last_char = c;
                 }else{
                     bracket_sem--;
@@ -344,6 +344,7 @@ namespace ue2 {
                         range_set = false;
                     }
                     last_char = '-';
+                    escaped = false;
                 }else{
                     range_set = true;
                     range_start = last_char;
