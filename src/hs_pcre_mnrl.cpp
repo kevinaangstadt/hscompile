@@ -61,6 +61,51 @@ namespace ue2 {
     }
     
     static
+    void upgrade_start(MNRL::MNRLNode &n, MNRLDefs::EnableType en) {
+      
+      // We'll say ACTIVATE_IN < START_AND_ACTIVATE_IN < ALWAYS < EOD
+      
+      switch(n.getEnable()) {
+        case MNRLDefs::EnableType::ENABLE_ON_START_AND_ACTIVATE_IN: {
+          switch(en) {
+            case MNRLDefs::EnableType::ENABLE_ALWAYS:
+            case MNRLDefs::EnableType::ENABLE_ON_LAST:
+              n.setEnable(en);
+              return;
+            default:
+              return;
+          }
+        }
+        
+        case MNRLDefs::EnableType::ENABLE_ALWAYS: {
+          switch(en) {
+            case MNRLDefs::EnableType::ENABLE_ON_LAST:
+              n.setEnable(en);
+              return;
+            default:
+              return;
+          }
+        }
+        
+        case MNRLDefs::EnableType::ENABLE_ON_LAST: {
+          return;
+        }
+        
+        case MNRLDefs::EnableType::ENABLE_ON_ACTIVATE_IN: {
+          switch(en) {
+            case MNRLDefs::EnableType::ENABLE_ALWAYS:
+            case MNRLDefs::EnableType::ENABLE_ON_START_AND_ACTIVATE_IN:
+            case MNRLDefs::EnableType::ENABLE_ON_LAST:
+              n.setEnable(en);
+              return;
+            default:
+              return;
+          }
+        }
+      }
+    }
+    
+    static
     void addExpressionMNRL(NG &ng, MNRLNetwork &mnrl, unsigned index, const char *expression,
         unsigned flags, const hs_expr_ext *ext, ReportID id) {
         assert(expression);
@@ -181,7 +226,7 @@ namespace ue2 {
                         // get the node
                         shared_ptr<MNRLNode> n = mnrl.getNodeById(mnrl_id.str());
                         
-                        n->setEnable(convert_enable(src_idx));
+                        upgrade_start(*n, convert_enable(src_idx));
                         
                         // let's save this id in case we need to deal
                         // with a start-->report edge
@@ -230,7 +275,7 @@ namespace ue2 {
                             shared_ptr<MNRLNode> n = mnrl.getNodeById(mnrl_id.str());
                             
                             // deal with EOD
-                            n->setEnable(convert_enable(dst_idx));
+                            upgrade_start(*n, convert_enable(dst_idx));
                             
                             n->setReport(true);
                             
