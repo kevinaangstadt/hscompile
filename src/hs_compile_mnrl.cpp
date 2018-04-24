@@ -136,10 +136,10 @@ namespace ue2 {
                 // handle starts
                 MNRLDefs::EnableType start_type = node->getEnable();
                 switch(start_type) {
-                case MNRLDefs::ENABLE_ALWAYS :
+                case MNRLDefs::EnableType::ENABLE_ALWAYS :
                     add_edge(graph.startDs, tmp, graph);
                     break;
-                case MNRLDefs::ENABLE_ON_START_AND_ACTIVATE_IN :
+                case MNRLDefs::EnableType::ENABLE_ON_START_AND_ACTIVATE_IN :
                     add_edge(graph.start, tmp, graph);
                     break;
                 default:

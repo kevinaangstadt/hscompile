@@ -171,7 +171,7 @@ namespace ue2 {
             CharReach reach = g[v].char_reach;
             u32 idx = g[v].index;
             
-            MNRLDefs::EnableType node_mode = MNRLDefs::ENABLE_ON_ACTIVATE_IN;
+            MNRLDefs::EnableType node_mode = MNRLDefs::EnableType::ENABLE_ON_ACTIVATE_IN;
             
             ostringstream node_id;
             node_id << expr.id << "_" << idx;
@@ -275,7 +275,15 @@ namespace ue2 {
                             shared_ptr<MNRLNode> n = mnrl.getNodeById(mnrl_id.str());
                             
                             // deal with EOD
-                            upgrade_start(*n, convert_enable(dst_idx));
+                            if(dst_idx == NODE_ACCEPT_EOD && !n->getReport()) {
+                              // EOD doesn't have to do with enable type
+                              // KAA changing to be the report enable
+                              // upgrade_start(*n, convert_enable(src_idx));
+                              n->setReportEnable(MNRLDefs::ReportEnableType::ENABLE_ON_LAST);
+                            } else if (dst_idx == NODE_ACCEPT) {
+                              // we need to loosen the report
+                              n->setReportEnable(MNRLDefs::ReportEnableType::ENABLE_ALWAYS);
+                            }
                             
                             n->setReport(true);
                             
