@@ -9,7 +9,7 @@ using Hyperscan as a CPU back-end.  There is also support for compiling PCRE to 
 - cmake >= 2.6
 - Hyperscan 4.4 source
     - Boost >= 1.57
-- MNRL
+- MNRL 1.0
 
 ## Building
 To successfully build `hscompile`, you must first build Hyperscan and the MNRL C++ API:
@@ -26,7 +26,26 @@ make
 
 ```bash
 git clone https://github.com/kevinaangstadt/mnrl
-cd mnrl/C++
+cd mnrl
+git checkout v1.0
+cd C++
+git submodule init
+git submodule update   
+cd lib/valijson
+git checkout v0.3
+cd ../..
+```
+
+edit the Makefile and change 
+```
+JSON = ./lib/valijson/thirdparty/nlohmann-json-1.1.0
+```
+with
+```
+JSON = ./lib/valijson/thirdparty/nlohmann-json-3.1.2
+```
+then
+```
 make
 ```
 
