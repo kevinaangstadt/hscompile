@@ -9,7 +9,7 @@ using Hyperscan as a CPU back-end.  There is also support for compiling PCRE to 
 - cmake >= 2.6
 - Hyperscan 4.4 source
     - Boost >= 1.57
-- MNRL
+- MNRL 1.0
 
 ## Building
 To successfully build `hscompile`, you must first build Hyperscan and the MNRL C++ API:
