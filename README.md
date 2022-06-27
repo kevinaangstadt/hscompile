@@ -14,6 +14,7 @@ using Hyperscan as a CPU back-end.  There is also support for compiling PCRE to 
 - rage (i.e., `sudo apt-get install ragel`)
 - sqlite3 (i.e., `sudo apt-get install -y libsqlite3-dev`)
 - pkg-config (i.e., `sudo apt-get install pkg-config`)
+- nasm (i.e., `sudo apt-get -y install nasm`)
 
 ## Building
 To successfully build `hscompile`, you must first build Hyperscan and the MNRL C++ API:
