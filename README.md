@@ -11,7 +11,8 @@ using Hyperscan as a CPU back-end.  There is also support for compiling PCRE to 
     - Boost >= 1.57 (i.e., ` sudo apt-get install libboost-all-dev`)
 - MNRL 1.0
 - `build-essential`
-- `sudo apt-get install ragel`
+- rage (i.e., `sudo apt-get install ragel`)
+- sqlite3 (i.e., `sudo apt-get install -y libsqlite3-dev`)
 
 ## Building
 To successfully build `hscompile`, you must first build Hyperscan and the MNRL C++ API:
